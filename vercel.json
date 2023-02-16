@@ -9,7 +9,7 @@
         {
             "src": "/api/data",
             "methods": ["GET"],
-            "dest": "main.app"
+            "dest": "main.py"
         }
     ]
 }
