@@ -1,14 +1,34 @@
-from fastapi import FastAPI
-import uvicorn
+from fastapi import FastAPI, HTTPException
+from youtube_transcript_api import YouTubeTranscriptApi
+from pytube import YouTube
 
 app = FastAPI()
 
 
-@app.get('/api/data')
-def get_data():
-    data = {"name": "John", "age": 30, "city": "New York"}
-    return data
+def get_youtube_video(video_id: str):
+    try:
+        video_url = f'https://www.youtube.com/watch?v={video_id}'
+        return YouTube(video_url)
+    except Exception:
+        raise HTTPException(status_code=404, detail='Invalid video ID')
 
 
-# if __name__ == '__main__':
-#     uvicorn.run(app, host='127.0.0.1', port=8000)
+def get_transcript(video_id: str):
+    try:
+        transcript = YouTubeTranscriptApi.get_transcript(
+            video_id, languages=['ja'])
+        return ' '.join([line['text'] for line in transcript])
+    except Exception:
+        raise HTTPException(status_code=404, detail='Transcript not available')
+
+
+@app.get('/api/video/{video_id}')
+def get_video_info(video_id: str):
+    video = get_youtube_video(video_id)
+    transcript = get_transcript(video_id)
+    url = 'https://youtu.be/'+video_id
+    return {
+        'title': video.title,
+        'url': url,
+        'transcript': transcript
+    }
